@@ -1,6 +1,7 @@
 use std::fs;
 use std::io::{self, Write};
 use std::time::Duration;
+use anyhow::anyhow;
 use serde::{Serialize, Deserialize};
 use humantime::format_duration;
 use super::Args;
@@ -63,7 +64,11 @@ pub struct ConfigBuilder {
 
 impl ConfigBuilder {
 	pub fn deserialize(args: &Args) -> anyhow::Result<Self> {
-		Ok(toml::from_str(&fs::read_to_string(&args.config)?)?)
+		let config = match fs::read_to_string(&args.config){
+			Ok(c) => c,
+			Err(_) => return Err(anyhow!("Could not load config file \"{}\"", args.config)),
+		};
+		Ok(toml::from_str(&config)?)
 	}
 
 	pub fn build(self) -> Config {
@@ -226,7 +231,10 @@ enum Color {
 
 #[cfg(test)]
 mod tests {
-	use super::{Color, ConfigBuilder, Token};
+
+use crate::Args;
+
+use super::{Color, ConfigBuilder, Token};
 
 	#[test]
 	fn parse_format() {
@@ -249,5 +257,18 @@ mod tests {
 			Token::Literal(" text ".into()),
 			Token::Time,
 		]);
+	}
+
+	#[test]
+	fn indicate_missing_config_file() {
+		let result = ConfigBuilder::deserialize(&(Args {
+			help: false,
+			config: "~/.config/uair/no_uair.toml".into(),
+			socket: "/tmp/uair.sock".into(),
+		}));
+		assert_eq!(
+			result.err().unwrap().to_string(),
+			"Could not load config file \"~/.config/uair/no_uair.toml\"",
+		);
 	}
 }
