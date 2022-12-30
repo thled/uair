@@ -78,6 +78,10 @@ impl App {
 			Event::Command(Command::Pause(_)) => return Ok(State::Paused),
 			Event::Command(Command::Next(_)) => self.sid.next(),
 			Event::Command(Command::Prev(_)) => self.sid.prev(),
+			Event::Command(Command::Show(_)) => {
+				session.display::<true>(timer.duration)?;
+				return Ok(State::Resumed);
+			},
 			_ => unreachable!(),
 		}
 		Ok(State::Reset)
@@ -94,6 +98,10 @@ impl App {
 			}
 			Event::Command(Command::Next(_)) => self.sid.next(),
 			Event::Command(Command::Prev(_)) => self.sid.prev(),
+			Event::Command(Command::Show(_)) => {
+				session.display::<true>(timer.duration)?;
+				return Ok(State::Paused);
+			},
 			_ => unreachable!(),
 		}
 		Ok(State::Reset)
@@ -111,6 +119,8 @@ impl App {
 				Command::Next(_) if !self.sid.is_last() =>
 					return Ok(Event::Command(command)),
 				Command::Prev(_) if !self.sid.is_first() =>
+					return Ok(Event::Command(command)),
+				Command::Show(_) =>
 					return Ok(Event::Command(command)),
 				_ => {}
 			}
