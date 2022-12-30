@@ -52,7 +52,7 @@ impl App {
 					let session = &self.config.sessions[self.sid.curr()];
 					timer = UairTimer::new(session.duration, Duration::from_secs(1));
 					state = if session.autostart { State::Resumed } else { State::Paused };
-				}
+				},
 			}
 		}
 		Ok(())
@@ -74,11 +74,8 @@ impl App {
 				}
 				if self.sid.is_last() { return Ok(State::Finished) };
 				self.sid.next();
-			}
-			Event::Command(Command::Pause(_)) => {
-				timer.update_duration();
-				return Ok(State::Paused);
-			}
+			},
+			Event::Command(Command::Pause(_)) => return Ok(State::Paused),
 			Event::Command(Command::Next(_)) => self.sid.next(),
 			Event::Command(Command::Prev(_)) => self.sid.prev(),
 			_ => unreachable!(),
